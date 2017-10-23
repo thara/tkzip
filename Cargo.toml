@@ -1,0 +1,7 @@
+[package]
+name = "unzip-rs"
+version = "0.1.0"
+authors = ["Tomochika Hara <tomochikahara@gmail.com>"]
+
+[dependencies]
+zip = "0.2.6"
