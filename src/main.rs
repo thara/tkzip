@@ -15,6 +15,8 @@ fn main() {
     let prefix = &args[1];
     let dest = &args[2];
 
+    fs::create_dir_all(dest);
+
     let mut f = File::open(path).ok().expect("File open failed");
 
     let mut zip = zip::ZipArchive::new(f).ok().expect(
@@ -27,25 +29,31 @@ fn main() {
         let mut file = zip.by_index(i).expect("zip file index out bound");
         let dest_path = {
             let path = file.name();
-            if !file.name().starts_with(prefix) {
-                continue;
+            if file.name().starts_with(prefix) {
+                Some(dest_dir.join(path))
+            } else {
+                None
             }
-            println!("Filename: {}", path);
-            dest_dir.join(path)
         };
 
-        println!("Dest: {:?}", dest_path);
+        if let Some(path) = dest_path {
+            if path.extension().is_some() {
+                println!("path: {:?}", path);
 
-        let f = OpenOptions::new().write(true).open(dest_path).expect(
-            "path open failed",
-        );
-        let mut w = BufWriter::new(f);
+                if let Some(dir) = path.parent() {
+                    fs::create_dir_all(dir);
+                }
 
-        for b in file.bytes() {
-            if let Ok(byte) = b {
-                w.write(&[byte]);
+                if let Ok(f) = fs::File::create(path) {
+                    let mut w = BufWriter::new(f);
+                    for b in file.bytes() {
+                        if let Ok(byte) = b {
+                            w.write(&[byte]);
+                        }
+                    }
+                    w.flush();
+                }
             }
         }
-        w.flush();
     }
 }
